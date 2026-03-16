@@ -1,0 +1,131 @@
+title: FINOS Common Cloud Controls - VM Security Controls
+metadata:
+  id: finos-ccc-vm-controls
+  type: ControlCatalog
+  gemara-version: "0.1.0"
+  version: "1.0.0"
+  description: >-
+    Control catalog representing the FINOS Common Cloud Controls (CCC) framework,
+    scoped to controls applicable to virtual machine security. This catalog defines
+    CCC-specific controls for logging, access management, data encryption, and
+    network hardening. These controls are imported by the unified Linux VM Security
+    catalog to establish formal cross-framework traceability.
+  author:
+    id: complytime-demos
+    name: ComplyTime Demos
+    type: Human
+  mapping-references:
+    - id: finos-ccc
+      title: FINOS Common Cloud Controls
+      version: "2025.10"
+      description: Open standard for cloud security controls
+      url: https://ccc.finos.org
+    - id: finos-ccc-guidance
+      title: FINOS CCC VM Security Guidance Catalog
+      version: "1.0.0"
+      description: Gemara Layer 1 guidance derived from FINOS Common Cloud Controls
+families:
+  - id: LOG-MON
+    title: Logging and Monitoring
+    description: >-
+      Controls ensuring comprehensive logging of access attempts, configuration
+      changes, and data operations for security monitoring and compliance.
+  - id: IAM
+    title: Identity and Access Management
+    description: >-
+      Controls enforcing least-privilege access, strong authentication, and
+      restriction of untrusted entities.
+  - id: DATA
+    title: Data Protection
+    description: >-
+      Controls protecting data confidentiality and integrity through encryption
+      and approved cryptographic standards.
+controls:
+  - id: CCC-CN04
+    title: "CN04: Log All Access to Data and Administrative Actions"
+    objective: >-
+      Ensure that all access attempts, administrative actions, data modifications,
+      and configuration changes are logged with client identity, timestamp, and
+      result to support security monitoring, incident response, and compliance.
+    family: LOG-MON
+    assessment-requirements:
+      - id: CCC-CN04.AR01
+        text: >-
+          When administrative access or configuration change is attempted, the
+          service MUST log the client identity, time, and result of the attempt.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+      - id: CCC-CN04.AR02
+        text: >-
+          When any attempt is made to modify data on the service or a child
+          resource, the service MUST log the client identity, time, and result.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+      - id: CCC-CN04.AR03
+        text: >-
+          When any attempt is made to read data on the service or a child
+          resource, the service MUST log the client identity, time, and result.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+  - id: CCC-CN05
+    title: "CN05: Prevent Access from Untrusted Entities"
+    objective: >-
+      Enforce the principle of least privilege to restrict access to authorized
+      entities from explicitly trusted sources only, blocking unauthorized data
+      modification, administrative access, and all untrusted requests.
+    family: IAM
+    assessment-requirements:
+      - id: CCC-CN05.AR01
+        text: >-
+          When an attempt is made to modify data, the service MUST block
+          requests from unauthorized entities.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+      - id: CCC-CN05.AR02
+        text: >-
+          When administrative access or configuration change is attempted,
+          the service MUST refuse requests from unauthorized entities.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+      - id: CCC-CN05.AR06
+        text: >-
+          When any request is made to the service, the service MUST refuse
+          requests from unauthorized entities.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+  - id: CCC-CN02
+    title: "CN02: Encrypt Data at Rest"
+    objective: >-
+      Ensure that all data stored on the system is protected using strong,
+      industry-standard cryptographic algorithms and that the system-wide
+      cryptographic policy enforces minimum standards for all encryption.
+    family: DATA
+    assessment-requirements:
+      - id: CCC-CN02.AR01
+        text: >-
+          The system MUST use industry-standard cryptographic algorithms for
+          all data encryption operations.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments
+  - id: CCC-CN11
+    title: "CN11: Use Approved Cryptographic Algorithms"
+    objective: >-
+      Ensure that only approved cryptographic algorithms are permitted and that
+      deprecated or legacy algorithms are explicitly disabled across all system
+      services and encryption operations.
+    family: DATA
+    assessment-requirements:
+      - id: CCC-CN11.AR01
+        text: >-
+          The system MUST NOT permit the use of deprecated or legacy
+          cryptographic algorithms that are known to be vulnerable.
+        applicability:
+          - Cloud virtual machines
+          - All deployment environments

@@ -1,0 +1,371 @@
+title: CIS Fedora Linux Benchmark - Server Level 1 Controls
+metadata:
+  id: cis-fedora-server-l1-controls
+  type: ControlCatalog
+  gemara-version: "0.1.0"
+  version: "1.0.0"
+  description: >-
+    Primary control catalog for CIS Fedora Linux Benchmark (Level 1 - Server).
+    Controls are organized by benchmark section and contain assessment requirements
+    that map directly to OpenSCAP XCCDF rule IDs for automated evaluation via
+    the complyctl toolchain. Cross-framework traceability to FINOS Common Cloud
+    Controls is established through a companion MappingDocument.
+  author:
+    id: complytime-demos
+    name: ComplyTime Demos
+    type: Human
+  mapping-references:
+    - id: cis-fedora
+      title: CIS Fedora Linux Benchmark
+      version: "Draft"
+      description: CIS Benchmark for Fedora Linux based on CIS Fedora 40 Branch Benchmark
+      url: https://workbench.cisecurity.org/benchmarks/20722
+    - id: cis-fedora-guidance
+      title: CIS Fedora Server L1 Guidance Catalog
+      version: "1.0.0"
+      description: Gemara Layer 1 guidance derived from CIS Fedora Server L1 Benchmark
+    - id: openscap-ssg
+      title: SCAP Security Guide - Fedora
+      version: "latest"
+      description: ComplianceAsCode content for Fedora Linux
+      url: https://github.com/ComplianceAsCode/content
+families:
+  - id: AUDIT
+    title: "5 - Logging and Auditing"
+    description: >-
+      CIS Benchmark section 5 — Controls for configuring system audit services
+      and audit event rules.
+  - id: ACCESS
+    title: "4 - Access, Authentication and Authorization"
+    description: >-
+      CIS Benchmark section 4 — Controls for hardening remote access services
+      including SSH server configuration.
+  - id: CRYPTO
+    title: "1.6 - Configure System-wide Crypto Policy"
+    description: >-
+      CIS Benchmark section 1.6 — Controls enforcing system-wide cryptographic
+      standards and eliminating legacy algorithms.
+  - id: INTEGRITY
+    title: "1.2 - Configure Software Updates and Integrity"
+    description: >-
+      CIS Benchmark section 1.2 — Controls for file integrity monitoring
+      using AIDE.
+  - id: AUTH
+    title: "3 - Network Configuration and Host Based Firewall"
+    description: >-
+      CIS Benchmark sections 3.4-3.7 — Controls for PAM password quality,
+      account lockout, and user account security.
+  - id: NETWORK
+    title: "6 - System Maintenance"
+    description: >-
+      CIS Benchmark sections 6.1-6.2 — Controls for kernel network stack
+      hardening parameters.
+controls:
+  - id: CIS-AUDIT
+    title: "CIS §5.1-5.2: Audit Service and Event Logging"
+    objective: >-
+      Ensure the audit subsystem is installed, enabled, and configured with
+      rules to capture all access attempts, login events, session initiation,
+      and configuration changes as required by CIS Fedora Level 1 sections
+      5.1 and 5.2.
+    family: AUDIT
+    assessment-requirements:
+      - id: package_audit_installed
+        text: The audit package MUST be installed on the system.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.1.1.
+      - id: service_auditd_enabled
+        text: The auditd service MUST be enabled and running.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.1.2.
+      - id: grub2_audit_argument
+        text: >-
+          Auditing MUST be enabled for processes that start prior to the
+          audit daemon.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.1.3.
+      - id: grub2_audit_backlog_limit_argument
+        text: >-
+          The audit backlog limit MUST be sufficient to prevent event loss.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.1.4.
+      - id: audit_rules_login_events
+        text: The system MUST record login and logout events.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.2.x.
+      - id: audit_rules_login_events_faillock
+        text: The system MUST record failed login attempts via faillock.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.2.x.
+      - id: audit_rules_login_events_lastlog
+        text: The system MUST record last login information.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.2.x.
+      - id: audit_rules_session_events
+        text: >-
+          The system MUST record session initiation information including
+          utmp, wtmp, and btmp events.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 5.2.x.
+  - id: CIS-SSH
+    title: "CIS §4.2: SSH Server Hardening"
+    objective: >-
+      Harden the SSH server to prevent unauthorized access by disabling root
+      login, enforcing session timeouts, restricting file permissions, and
+      ensuring SSH follows the system-wide cryptographic policy, as required
+      by CIS Fedora Level 1 section 4.2.
+    family: ACCESS
+    assessment-requirements:
+      - id: sshd_disable_root_login
+        text: >-
+          SSH root login MUST be disabled to enforce role-based access and
+          prevent direct administrative access from untrusted entities.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 4.2.x.
+      - id: sshd_set_idle_timeout
+        text: >-
+          SSH sessions MUST be configured with an idle timeout to automatically
+          terminate inactive connections and prevent session hijacking.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 4.2.x.
+      - id: file_permissions_sshd_config
+        text: >-
+          SSH server configuration files MUST have restricted permissions.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 4.2.x.
+      - id: file_owner_sshd_config
+        text: >-
+          SSH server configuration files MUST be owned by root.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 4.2.x.
+      - id: file_groupowner_sshd_config
+        text: >-
+          SSH server configuration files MUST be group-owned by root.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 4.2.x.
+      - id: configure_ssh_crypto_policy
+        text: >-
+          SSH MUST follow the system-wide cryptographic policy to ensure only
+          approved ciphers and algorithms are used for remote access.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 4.2.x.
+  - id: CIS-CRYPTO
+    title: "CIS §1.6: System-wide Cryptographic Policy"
+    objective: >-
+      Enforce a system-wide cryptographic policy that eliminates legacy
+      algorithms, mandates approved ciphers and MACs, and ensures consistent
+      cryptographic standards across all system services, as required by CIS
+      Fedora Level 1 sections 1.6.1-1.6.4.
+    family: CRYPTO
+    assessment-requirements:
+      - id: configure_crypto_policy
+        text: >-
+          The system-wide cryptographic policy MUST NOT be set to LEGACY and MUST
+          enforce a minimum standard that disables deprecated algorithms.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 1.6.1.
+  - id: CIS-INTEGRITY
+    title: "CIS §1.2: File Integrity Monitoring with AIDE"
+    objective: >-
+      Install, configure, and schedule AIDE for periodic file integrity checks
+      including audit tool verification, as required by CIS Fedora Level 1
+      sections 1.2.1-1.2.4.
+    family: INTEGRITY
+    assessment-requirements:
+      - id: package_aide_installed
+        text: The AIDE file integrity checking package MUST be installed.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 1.2.1.
+      - id: aide_build_database
+        text: The AIDE database MUST be built and initialized.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 1.2.2.
+      - id: aide_check_audit_tools
+        text: AIDE MUST be configured to verify the integrity of audit tools.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 1.2.3.
+      - id: aide_periodic_cron_checking
+        text: >-
+          AIDE MUST be configured for periodic execution to detect unauthorized
+          file modifications.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 1.2.4.
+  - id: CIS-AUTH
+    title: "CIS §3.4-3.7: Password and Authentication Controls"
+    objective: >-
+      Enforce strong password policies, account lockout mechanisms, and
+      authentication controls to prevent brute-force attacks, credential
+      reuse, and unauthorized access through weak or empty passwords, as
+      required by CIS Fedora Level 1 sections 3.4, 3.5, and 3.7.
+    family: AUTH
+    assessment-requirements:
+      - id: accounts_password_pam_minlen
+        text: >-
+          The system MUST enforce a minimum password length of at least 14
+          characters.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 3.5.x.
+      - id: accounts_password_pam_minclass
+        text: >-
+          The system MUST require passwords to contain characters from at
+          least four different character classes.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 3.5.x.
+      - id: accounts_passwords_pam_faillock_deny
+        text: >-
+          The system MUST lock accounts after a defined number of consecutive
+          failed login attempts.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 3.4.x.
+      - id: accounts_passwords_pam_faillock_unlock_time
+        text: >-
+          The system MUST enforce a lockout duration after failed login attempts
+          to slow brute-force attacks.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 3.4.x.
+      - id: no_empty_passwords
+        text: >-
+          The system MUST prevent login to accounts with empty or blank
+          passwords.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 3.7.x.
+      - id: accounts_no_uid_except_zero
+        text: Only the root account MUST have UID 0.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 3.7.x.
+  - id: CIS-NETWORK
+    title: "CIS §6.1-6.2: Network Stack Hardening"
+    objective: >-
+      Harden the kernel network stack to prevent IP forwarding, ICMP redirect
+      attacks, source routing, and IP spoofing while enabling SYN flood
+      protection and suspicious packet logging, as required by CIS Fedora
+      Level 1 sections 6.1-6.2.
+    family: NETWORK
+    assessment-requirements:
+      - id: sysctl_net_ipv4_ip_forward
+        text: IP forwarding MUST be disabled on non-router systems.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 6.1.x.
+      - id: sysctl_net_ipv4_conf_all_send_redirects
+        text: >-
+          The system MUST NOT send ICMP redirects to prevent routing
+          manipulation attacks.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 6.1.x.
+      - id: sysctl_net_ipv4_conf_all_accept_redirects
+        text: >-
+          The system MUST NOT accept ICMP redirects to prevent route
+          poisoning attacks.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 6.2.x.
+      - id: sysctl_net_ipv4_conf_all_accept_source_route
+        text: >-
+          The system MUST NOT accept source-routed packets to prevent
+          routing bypass attacks.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 6.2.x.
+      - id: sysctl_net_ipv4_conf_all_log_martians
+        text: >-
+          The system MUST log packets with impossible source addresses
+          (martian packets) for security monitoring.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 6.2.x.
+      - id: sysctl_net_ipv4_tcp_syncookies
+        text: >-
+          TCP SYN cookies MUST be enabled to protect against SYN flood
+          denial-of-service attacks.
+        applicability:
+          - Fedora Linux servers
+          - CIS Level 1 - Server
+        recommendation: >-
+          CIS Fedora section 6.2.x.

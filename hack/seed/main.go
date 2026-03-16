@@ -53,6 +53,14 @@ type artifactDef struct {
 	layers []layerDef
 }
 
+func mustLoad(path string) []byte {
+	data, err := seedData.ReadFile(path)
+	if err != nil {
+		log.Fatalf("failed to load seed data %q: %v", path, err)
+	}
+	return data
+}
+
 func main() {
 	var output string
 	flag.StringVar(&output, "output", "/tmp/oci-store", "Output storage root directory")
@@ -61,186 +69,51 @@ func main() {
 	blobRoot := filepath.Join(output, "blobs")
 	dbPath := filepath.Join(output, "index.db")
 
-	cisCatalog, err := seedData.ReadFile("testdata/cis-fedora-l1-server-catalog.yaml")
-	if err != nil {
-		log.Fatalf("failed to load CIS Fedora catalog seed data: %v", err)
-	}
-	cisPolicy, err := seedData.ReadFile("testdata/cis-fedora-l1-server-policy.yaml")
-	if err != nil {
-		log.Fatalf("failed to load CIS Fedora policy seed data: %v", err)
-	}
+	// Load seed files (flat layout, each file loaded once)
+	cisGuidance := mustLoad("testdata/cis-fedora-l1-server-guidance-cis.yaml")
+	cisControls := mustLoad("testdata/cis-fedora-l1-server-controls.yaml")
+	cisServerPolicy := mustLoad("testdata/cis-fedora-l1-server-policy.yaml")
+	cisServerTailoredPolicy := mustLoad("testdata/cis-fedora-l1-server-tailored-policy.yaml")
+
+	cisWsCatalog := mustLoad("testdata/cis-fedora-l1-workstation-catalog.yaml")
+	cisWsPolicy := mustLoad("testdata/cis-fedora-l1-workstation-policy.yaml")
+
+	ampelCatalog := mustLoad("testdata/ampel-branch-protection-catalog.yaml")
+	ampelPolicy := mustLoad("testdata/ampel-branch-protection-policy.yaml")
 
 	artifacts := []artifactDef{
-		{
-			repo: "policies/nist-800-53-r5",
-			tags: []string{"v1.0.0", "latest"},
-			layers: []layerDef{
-				{mediaType: gemaraCatalogType, data: []byte(`title: NIST SP 800-53 Rev 5
-metadata:
-  id: nist-800-53-r5
-  description: Security and privacy controls for information systems
-  author:
-    id: nist
-    name: NIST
-    type: Human
-families:
-  - id: access-control
-    title: Access Control
-    description: Controls related to access management
-controls:
-  - id: AC-1
-    title: Access Control Policy
-    objective: Establish and maintain access control policy
-    family: access-control
-    assessment-requirements:
-      - id: AC-1-ar
-        text: Access control policy MUST be documented and maintained
-        applicability:
-          - All systems
-  - id: AC-2
-    title: Account Management
-    objective: Manage information system accounts
-    family: access-control
-    assessment-requirements:
-      - id: AC-2-ar
-        text: System accounts MUST be properly managed
-        applicability:
-          - All systems
-`)},
-				{mediaType: gemaraPolicyType, data: []byte(`title: NIST SP 800-53 Rev 5 Policy
-metadata:
-  id: nist-800-53-r5-policy
-  description: Automated evaluation policy for NIST SP 800-53 Rev 5
-  author:
-    id: complytime
-    name: ComplyTime
-    type: Software
-  mapping-references:
-    - id: nist-800-53-r5
-      title: NIST SP 800-53 Rev 5
-      version: "5.0"
-contacts:
-  responsible:
-    - name: System Administrator
-  accountable:
-    - name: Security Team
-scope:
-  in:
-    technologies:
-      - Information Systems
-imports:
-  catalogs:
-    - reference-id: nist-800-53-r5
-adherence:
-  evaluation-methods:
-    - type: automated
-      executor:
-        id: test
-        name: Test Evaluator
-        type: Software
-  assessment-plans:
-    - id: AC-1-impl
-      requirement-id: AC-1-ar
-      frequency: on-demand
-      evaluation-methods:
-        - type: automated
-    - id: AC-2-impl
-      requirement-id: AC-2-ar
-      frequency: on-demand
-      evaluation-methods:
-        - type: automated
-`)},
-			},
-		},
-		{
-			repo: "policies/cis-benchmark",
-			tags: []string{"v2.0.0", "latest"},
-			layers: []layerDef{
-				{mediaType: gemaraCatalogType, data: []byte(`title: CIS Benchmark
-metadata:
-  id: cis-benchmark
-  description: Center for Internet Security Benchmark controls
-  author:
-    id: cis
-    name: CIS
-    type: Human
-families:
-  - id: filesystem
-    title: Filesystem Configuration
-    description: Controls for filesystem hardening
-controls:
-  - id: CIS-1.1
-    title: Filesystem Configuration
-    objective: Harden filesystem configuration
-    family: filesystem
-    assessment-requirements:
-      - id: CIS-1.1-ar
-        text: Filesystem MUST be properly configured
-        applicability:
-          - All systems
-`)},
-			},
-		},
-		{
-			repo: "catalogs/osps-b",
-			tags: []string{"v1.0.0", "latest"},
-			layers: []layerDef{
-				{mediaType: gemaraCatalogType, data: []byte(`title: Open Source Project Security Baseline
-metadata:
-  id: osps-b
-  description: Security baseline controls for open source projects
-  author:
-    id: openssf
-    name: OpenSSF
-    type: Human
-families:
-  - id: quality-assurance
-    title: Quality Assurance
-    description: Controls ensuring software quality and security
-controls:
-  - id: OSPS-QA-07.01
-    title: Quality Assurance Control
-    objective: Ensure quality assurance processes are in place
-    family: quality-assurance
-    assessment-requirements:
-      - id: OSPS-QA-07.01-ar
-        text: Quality assurance controls MUST be implemented
-        applicability:
-          - Open source projects
-`)},
-			},
-		},
-		{
-			repo: "guidance/nist",
-			tags: []string{"v1.0.0", "latest"},
-			layers: []layerDef{
-				{mediaType: gemaraGuidanceType, data: []byte(`title: NIST Security Guidance
-metadata:
-  id: nist-guidance
-  description: NIST security guidance for information systems
-  author:
-    id: nist
-    name: NIST
-    type: Human
-type: Standard
-families:
-  - id: access-control
-    title: Access Control
-    description: Guidelines related to access management
-guidelines:
-  - id: nist-guide-ac
-    title: Access Control Guidance
-    objective: Provide guidance on access control implementation
-    family: access-control
-`)},
-			},
-		},
 		{
 			repo: "policies/cis-fedora-l1-server",
 			tags: []string{"v1.0.0", "latest"},
 			layers: []layerDef{
-				{mediaType: gemaraCatalogType, data: cisCatalog},
-				{mediaType: gemaraPolicyType, data: cisPolicy},
+				{mediaType: gemaraGuidanceType, data: cisGuidance},
+				{mediaType: gemaraCatalogType, data: cisControls},
+				{mediaType: gemaraPolicyType, data: cisServerPolicy},
+			},
+		},
+		{
+			repo: "policies/cis-fedora-l1-server-tailored",
+			tags: []string{"v1.0.0", "latest"},
+			layers: []layerDef{
+				{mediaType: gemaraGuidanceType, data: cisGuidance},
+				{mediaType: gemaraCatalogType, data: cisControls},
+				{mediaType: gemaraPolicyType, data: cisServerTailoredPolicy},
+			},
+		},
+		{
+			repo: "policies/cis-fedora-l1-workstation",
+			tags: []string{"v1.0.0", "latest"},
+			layers: []layerDef{
+				{mediaType: gemaraCatalogType, data: cisWsCatalog},
+				{mediaType: gemaraPolicyType, data: cisWsPolicy},
+			},
+		},
+		{
+			repo: "policies/ampel-branch-protection",
+			tags: []string{"v1.0.0", "latest"},
+			layers: []layerDef{
+				{mediaType: gemaraCatalogType, data: ampelCatalog},
+				{mediaType: gemaraPolicyType, data: ampelPolicy},
 			},
 		},
 	}
@@ -326,7 +199,7 @@ guidelines:
 	}
 
 	log.Printf("Storage root ready at %s", output)
-	log.Printf("Run the server with: go run ./cmd/compass --storage-root %s --skip-tls", output)
+	log.Printf("Run the server with: go run ./cmd/gemara-content-service --storage-root %s --skip-tls", output)
 }
 
 func digestOf(data []byte) string {

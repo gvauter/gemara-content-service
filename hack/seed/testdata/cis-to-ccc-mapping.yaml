@@ -1,0 +1,146 @@
+title: CIS Fedora Server L1 to FINOS CCC VM Security Mapping
+metadata:
+  id: cis-to-ccc-mapping
+  type: MappingDocument
+  gemara-version: "0.1.0"
+  version: "1.0.0"
+  description: >-
+    Formal cross-framework mapping between CIS Fedora Linux Benchmark
+    (Level 1 - Server) controls and FINOS Common Cloud Controls applicable
+    to virtual machine security. Each mapping declares the relationship type,
+    rationale, and applicability context so that tooling can trace compliance
+    results across both frameworks from a single assessment.
+  author:
+    id: complytime-demos
+    name: ComplyTime Demos
+    type: Human
+  mapping-references:
+    - id: cis-fedora-server-l1
+      title: CIS Fedora Server L1 Controls Catalog
+      version: "1.0.0"
+      description: Gemara Layer 2 control catalog for CIS Fedora Server Level 1
+    - id: finos-ccc-vm
+      title: FINOS CCC VM Security Controls Catalog
+      version: "1.0.0"
+      description: Gemara Layer 2 control catalog for FINOS Common Cloud Controls
+source-reference:
+  reference-id: cis-fedora-server-l1
+  remarks: CIS controls are the source — they define the assessment requirements evaluated by OpenSCAP.
+target-reference:
+  reference-id: finos-ccc-vm
+  remarks: CCC controls are the target — CIS assessment results provide evidence for CCC compliance.
+mappings:
+  - id: cis-audit-to-ccc-cn04
+    source:
+      entry-id: CIS-AUDIT
+      entry-type: Control
+    target:
+      entry-id: CCC-CN04
+      entry-type: Control
+    relationship: implements
+    rationale: >-
+      CIS audit controls (§5.1-5.2) require installing the audit subsystem,
+      enabling auditd, and recording login, logout, session, and configuration
+      change events. These directly implement CCC CN04's requirement to log all
+      access to data and administrative actions with client identity, timestamp,
+      and result.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines
+  - id: cis-ssh-to-ccc-cn05
+    source:
+      entry-id: CIS-SSH
+      entry-type: Control
+    target:
+      entry-id: CCC-CN05
+      entry-type: Control
+    relationship: supports
+    rationale: >-
+      CIS SSH hardening (§4.2) disables root login, enforces idle timeouts,
+      restricts config file permissions, and mandates the system crypto policy
+      for SSH. These measures support CCC CN05's requirement to prevent access
+      from untrusted entities, but do not fully implement it since CN05 also
+      covers non-SSH access vectors.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines
+  - id: cis-crypto-to-ccc-cn02
+    source:
+      entry-id: CIS-CRYPTO
+      entry-type: Control
+    target:
+      entry-id: CCC-CN02
+      entry-type: Control
+    relationship: implements
+    rationale: >-
+      CIS crypto policy (§1.6) enforces system-wide cryptographic standards
+      that disable legacy algorithms and mandate approved ciphers. This
+      implements CCC CN02's requirement to encrypt data at rest using
+      industry-standard cryptographic algorithms.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines
+  - id: cis-crypto-to-ccc-cn11
+    source:
+      entry-id: CIS-CRYPTO
+      entry-type: Control
+    target:
+      entry-id: CCC-CN11
+      entry-type: Control
+    relationship: implements
+    rationale: >-
+      CIS crypto policy (§1.6.1-1.6.4) applies a CIS-specific custom submodule
+      that disables SHA-1, configures approved MACs, and disables CBC mode.
+      This implements CCC CN11's requirement to use only approved cryptographic
+      algorithms and disable deprecated ones.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines
+  - id: cis-integrity-to-ccc-cn04
+    source:
+      entry-id: CIS-INTEGRITY
+      entry-type: Control
+    target:
+      entry-id: CCC-CN04
+      entry-type: Control
+    relationship: supports
+    rationale: >-
+      CIS file integrity monitoring (§1.2) installs and schedules AIDE to
+      detect unauthorized changes to system files and audit tools. This
+      supports CCC CN04 by providing tamper-detection evidence that
+      complements audit event logging.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines
+  - id: cis-auth-to-ccc-cn05
+    source:
+      entry-id: CIS-AUTH
+      entry-type: Control
+    target:
+      entry-id: CCC-CN05
+      entry-type: Control
+    relationship: supports
+    rationale: >-
+      CIS authentication controls (§3.4-3.7) enforce password complexity,
+      account lockout, and prevent empty-password login. These support CCC
+      CN05's prevention of untrusted entity access by strengthening the
+      authentication boundary, but do not cover all CN05 access vectors.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines
+  - id: cis-network-to-ccc-cn05
+    source:
+      entry-id: CIS-NETWORK
+      entry-type: Control
+    target:
+      entry-id: CCC-CN05
+      entry-type: Control
+    relationship: supports
+    rationale: >-
+      CIS network hardening (§6.1-6.2) disables IP forwarding, rejects ICMP
+      redirects, blocks source-routed packets, enables SYN cookies, and logs
+      martian packets. These support CCC CN05 by hardening the network stack
+      against routing and spoofing attacks used to bypass access controls.
+    applicability:
+      - Fedora Linux servers
+      - Cloud virtual machines

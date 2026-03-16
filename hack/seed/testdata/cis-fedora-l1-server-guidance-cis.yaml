@@ -1,0 +1,382 @@
+title: CIS Fedora Linux Benchmark - Server Level 1 Guidance
+metadata:
+  id: cis-fedora-server-l1-guidance
+  type: GuidanceCatalog
+  gemara-version: "0.1.0"
+  version: "1.0.0"
+  description: >-
+    Guidance catalog derived from the CIS Fedora Linux Benchmark for Level 1 - Server.
+    This subset focuses on three critical security domains: audit logging, access control,
+    and cryptographic policy. These guidelines map to specific OpenSCAP rules from the
+    ComplianceAsCode cis_server_l1 profile for Fedora.
+  author:
+    id: complytime-demos
+    name: ComplyTime Demos
+    type: Human
+  mapping-references:
+    - id: cis-fedora
+      title: CIS Fedora Linux Benchmark
+      version: "Draft"
+      description: CIS Benchmark for Fedora Linux based on CIS Fedora 40 Branch Benchmark
+      url: https://workbench.cisecurity.org/benchmarks/20722
+    - id: openscap-ssg
+      title: SCAP Security Guide - Fedora
+      version: "latest"
+      description: ComplianceAsCode content for Fedora Linux
+      url: https://github.com/ComplianceAsCode/content
+  draft: true
+type: Best Practice
+front-matter: >-
+    This guidance catalog captures key security recommendations from the CIS Fedora Linux
+    Benchmark (Level 1 - Server). It covers six security domains commonly required across
+    multiple compliance frameworks: audit logging, access control, cryptographic policy,
+    file integrity monitoring, authentication hardening, and network stack security.
+    Each guideline references concrete OpenSCAP rules that can be evaluated automatically
+    using the complyctl toolchain.
+families:
+  - id: AUDIT
+    title: Audit and Logging
+    description: >-
+      Guidelines related to system audit configuration, ensuring that security-relevant
+      events are captured, stored, and protected from tampering.
+  - id: ACCESS
+    title: Access Control and Authentication
+    description: >-
+      Guidelines related to restricting system access to authorized entities, including
+      SSH server hardening and authentication configuration.
+  - id: CRYPTO
+    title: Cryptographic Policy
+    description: >-
+      Guidelines related to system-wide cryptographic standards, ensuring that only
+      approved algorithms and protocols are permitted.
+  - id: INTEGRITY
+    title: File Integrity
+    description: >-
+      Guidelines related to file integrity monitoring using AIDE to detect
+      unauthorized changes to system files and configurations.
+  - id: AUTH
+    title: Authentication Hardening
+    description: >-
+      Guidelines related to password policies, account lockout, and
+      authentication controls to prevent brute-force and credential attacks.
+  - id: NETWORK
+    title: Network Hardening
+    description: >-
+      Guidelines related to kernel network stack configuration to prevent
+      routing attacks, spoofing, and denial-of-service.
+guidelines:
+  - id: CIS-AUDIT-SERVICE
+    title: Ensure audit services are enabled and configured
+    objective: >-
+      Guarantee that the Linux audit subsystem (auditd) is installed, enabled, and
+      actively collecting security-relevant events on the system.
+    family: AUDIT
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        The audit daemon provides the foundation for all system-level audit logging.
+        Without auditd running, no kernel-level audit events will be captured,
+        leaving the system blind to unauthorized access attempts and configuration changes.
+      goals:
+        - Capture all security-relevant system events
+        - Maintain an audit trail for forensic analysis and compliance reporting
+        - Detect unauthorized access and configuration changes
+    recommendations:
+      - Install the audit package and enable the auditd service via systemctl
+      - Configure audit to start before other services using grub audit=1 parameter
+      - Ensure audit backlog limit is sufficient for system workload
+    statements:
+      - id: CIS-AUDIT-SERVICE.01
+        title: Audit package installation
+        text: The audit package MUST be installed on the system.
+        recommendations:
+          - "OpenSCAP rule: package_audit_installed"
+      - id: CIS-AUDIT-SERVICE.02
+        title: Audit service enablement
+        text: The auditd service MUST be enabled and running.
+        recommendations:
+          - "OpenSCAP rule: service_auditd_enabled"
+      - id: CIS-AUDIT-SERVICE.03
+        title: Pre-auditd audit logging
+        text: Auditing MUST be enabled for processes that start prior to auditd.
+        recommendations:
+          - "OpenSCAP rule: grub2_audit_argument"
+      - id: CIS-AUDIT-SERVICE.04
+        title: Audit backlog limit
+        text: The audit backlog limit MUST be sufficient to avoid lost events.
+        recommendations:
+          - "OpenSCAP rule: grub2_audit_backlog_limit_argument"
+    see-also:
+      - CIS-AUDIT-EVENTS
+  - id: CIS-AUDIT-EVENTS
+    title: Ensure audit rules capture access and change events
+    objective: >-
+      Configure audit rules to record login events, session initiation, and
+      changes to critical system files, ensuring a complete audit trail
+      of access and modifications.
+    family: AUDIT
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        Without specific audit rules, auditd will not capture the events necessary
+        to detect unauthorized access or changes. Audit rules must target login
+        attempts, session creation, and modification of identity-related files.
+      goals:
+        - Record all authentication and login events
+        - Capture session initiation and termination
+        - Track changes to user and group management files
+    recommendations:
+      - Configure audit rules for /var/log/lastlog, /var/run/faillock, and /var/log/tallylog
+      - Configure audit rules for /var/run/utmp, /var/log/wtmp, and /var/log/btmp
+    statements:
+      - id: CIS-AUDIT-EVENTS.01
+        title: Login and logout event recording
+        text: The system MUST record all login and logout events.
+        recommendations:
+          - "OpenSCAP rule: audit_rules_login_events"
+          - "OpenSCAP rule: audit_rules_login_events_faillock"
+          - "OpenSCAP rule: audit_rules_login_events_lastlog"
+      - id: CIS-AUDIT-EVENTS.02
+        title: Session initiation recording
+        text: The system MUST record session initiation information.
+        recommendations:
+          - "OpenSCAP rule: audit_rules_session_events"
+          - "OpenSCAP rule: audit_rules_session_events_utmp"
+          - "OpenSCAP rule: audit_rules_session_events_wtmp"
+          - "OpenSCAP rule: audit_rules_session_events_btmp"
+    see-also:
+      - CIS-AUDIT-SERVICE
+  - id: CIS-ACCESS-SSH
+    title: Ensure SSH server is hardened against unauthorized access
+    objective: >-
+      Harden the OpenSSH server configuration to prevent unauthorized access,
+      enforce strong authentication, and limit exposure to brute-force attacks.
+    family: ACCESS
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        SSH is the primary remote access mechanism for Linux servers. Misconfigured
+        SSH allows root login, weak authentication, and stale sessions that can be
+        exploited by attackers to gain persistent unauthorized access.
+      goals:
+        - Prevent direct root login over SSH
+        - Enforce idle session timeouts
+        - Restrict SSH access to approved authentication methods
+        - Ensure SSH follows system-wide cryptographic policy
+    recommendations:
+      - Disable root login in sshd_config
+      - Set ClientAliveInterval and ClientAliveCountMax for session timeouts
+      - Ensure SSH is configured to use the system crypto policy
+      - Restrict SSH access using AllowUsers or AllowGroups directives
+    statements:
+      - id: CIS-ACCESS-SSH.01
+        title: Root login disabled
+        text: SSH root login MUST be disabled.
+        recommendations:
+          - "OpenSCAP rule: sshd_disable_root_login"
+      - id: CIS-ACCESS-SSH.02
+        title: SSH idle timeout
+        text: SSH sessions MUST be configured with an idle timeout interval.
+        recommendations:
+          - "OpenSCAP rule: sshd_set_idle_timeout"
+          - "OpenSCAP rule: sshd_idle_timeout_value=5_minutes"
+      - id: CIS-ACCESS-SSH.03
+        title: SSH permissions on config
+        text: SSH server configuration files MUST have restricted permissions.
+        recommendations:
+          - "OpenSCAP rule: file_permissions_sshd_config"
+          - "OpenSCAP rule: file_owner_sshd_config"
+          - "OpenSCAP rule: file_groupowner_sshd_config"
+      - id: CIS-ACCESS-SSH.04
+        title: SSH crypto policy
+        text: SSH MUST follow the system-wide cryptographic policy.
+        recommendations:
+          - "OpenSCAP rule: configure_ssh_crypto_policy"
+  - id: CIS-CRYPTO-POLICY
+    title: Ensure system-wide cryptographic policy enforces approved standards
+    objective: >-
+      Configure the system-wide cryptographic policy to disable legacy algorithms,
+      enforce approved ciphers and MACs, and ensure all cryptographic operations
+      across the system meet minimum security standards.
+    family: CRYPTO
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        A weak or legacy cryptographic policy exposes the system to downgrade attacks,
+        where attackers force the use of broken algorithms. The system-wide crypto
+        policy in Fedora controls all TLS, SSH, and disk encryption cipher selections,
+        making it a single point of enforcement for cryptographic standards.
+      goals:
+        - Eliminate use of legacy or deprecated cryptographic algorithms
+        - Enforce minimum cipher strength across all system services
+        - Ensure consistent cryptographic posture for data in transit and at rest
+    recommendations:
+      - Set system-wide crypto policy to at least DEFAULT (never LEGACY)
+      - Apply CIS-specific crypto policy submodule to disable SHA-1, CBC for SSH
+      - Verify crypto policy is applied to all relevant subsystems
+    statements:
+      - id: CIS-CRYPTO-POLICY.01
+        title: No legacy crypto policy
+        text: The system-wide cryptographic policy MUST NOT be set to LEGACY.
+        recommendations:
+          - "OpenSCAP rule: configure_crypto_policy"
+  - id: CIS-FILE-INTEGRITY
+    title: Ensure file integrity monitoring is configured
+    objective: >-
+      Install and configure AIDE (Advanced Intrusion Detection Environment) to
+      detect unauthorized modifications to critical system files, binaries,
+      and configurations.
+    family: INTEGRITY
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        File integrity monitoring provides a critical detection layer against
+        rootkits, backdoors, and unauthorized configuration changes. Without
+        regular integrity checks, attackers can modify system binaries or
+        configurations and maintain persistent access undetected.
+      goals:
+        - Detect unauthorized changes to system files and configurations
+        - Verify integrity of audit tools to prevent tampering
+        - Establish a baseline for system file integrity
+    recommendations:
+      - Install AIDE and build an initial database of file checksums
+      - Configure AIDE to verify audit tool integrity
+      - Schedule periodic AIDE checks via cron or systemd timer
+    statements:
+      - id: CIS-FILE-INTEGRITY.01
+        title: AIDE installation
+        text: The AIDE package MUST be installed.
+        recommendations:
+          - "OpenSCAP rule: package_aide_installed"
+      - id: CIS-FILE-INTEGRITY.02
+        title: AIDE database initialization
+        text: The AIDE database MUST be built and tested.
+        recommendations:
+          - "OpenSCAP rule: aide_build_database"
+      - id: CIS-FILE-INTEGRITY.03
+        title: AIDE audit tool verification
+        text: AIDE MUST be configured to verify audit tool integrity.
+        recommendations:
+          - "OpenSCAP rule: aide_check_audit_tools"
+      - id: CIS-FILE-INTEGRITY.04
+        title: Periodic AIDE execution
+        text: AIDE MUST be configured for periodic execution.
+        recommendations:
+          - "OpenSCAP rule: aide_periodic_cron_checking"
+  - id: CIS-AUTH-HARDENING
+    title: Ensure password and authentication policies are enforced
+    objective: >-
+      Configure PAM and password policies to enforce strong passwords, lock
+      accounts after failed attempts, and prevent login with empty credentials.
+    family: AUTH
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        Weak passwords and permissive authentication settings are among the
+        most exploited attack vectors. Strong password policies combined with
+        account lockout mechanisms significantly reduce the risk of brute-force
+        attacks and credential compromise.
+      goals:
+        - Enforce minimum password complexity and length
+        - Lock accounts after repeated authentication failures
+        - Prevent use of empty or trivial passwords
+        - Ensure only root has UID 0
+    recommendations:
+      - Configure pam_pwquality for minimum length (14) and class requirements (4)
+      - Configure pam_faillock to lock accounts after 5 failed attempts
+      - Set faillock unlock time to at least 900 seconds
+      - Ensure no accounts have empty passwords
+    statements:
+      - id: CIS-AUTH-HARDENING.01
+        title: Minimum password length
+        text: Passwords MUST be at least 14 characters long.
+        recommendations:
+          - "OpenSCAP rule: accounts_password_pam_minlen"
+      - id: CIS-AUTH-HARDENING.02
+        title: Password complexity
+        text: Passwords MUST contain characters from at least 4 classes.
+        recommendations:
+          - "OpenSCAP rule: accounts_password_pam_minclass"
+      - id: CIS-AUTH-HARDENING.03
+        title: Account lockout
+        text: Accounts MUST be locked after failed login attempts.
+        recommendations:
+          - "OpenSCAP rule: accounts_passwords_pam_faillock_deny"
+          - "OpenSCAP rule: accounts_passwords_pam_faillock_unlock_time"
+      - id: CIS-AUTH-HARDENING.04
+        title: No empty passwords
+        text: Login with empty passwords MUST be prevented.
+        recommendations:
+          - "OpenSCAP rule: no_empty_passwords"
+      - id: CIS-AUTH-HARDENING.05
+        title: Unique UID 0
+        text: Only root MUST have UID 0.
+        recommendations:
+          - "OpenSCAP rule: accounts_no_uid_except_zero"
+  - id: CIS-NETWORK-HARDENING
+    title: Ensure network stack is hardened against routing attacks
+    objective: >-
+      Configure kernel network parameters to disable IP forwarding, reject
+      ICMP redirects and source-routed packets, enable SYN flood protection,
+      and log suspicious network traffic.
+    family: NETWORK
+    applicability:
+      - Fedora Linux servers
+      - CIS Level 1 - Server
+    rationale:
+      importance: >-
+        Default kernel network settings may allow routing manipulation, ICMP
+        redirect attacks, and IP spoofing. Hardening sysctl parameters closes
+        these attack vectors at the OS level, preventing the system from being
+        used as a pivot point or targeted by network-level attacks.
+      goals:
+        - Prevent the system from acting as a network router
+        - Block ICMP redirect-based route poisoning
+        - Reject source-routed packets that bypass normal routing
+        - Enable SYN flood protection
+        - Log packets with impossible source addresses
+    recommendations:
+      - Set net.ipv4.ip_forward=0 on non-router systems
+      - Disable send and accept redirects on all interfaces
+      - Disable source routing acceptance
+      - Enable tcp_syncookies for SYN flood protection
+      - Enable log_martians for suspicious packet logging
+    statements:
+      - id: CIS-NETWORK-HARDENING.01
+        title: Disable IP forwarding
+        text: IP forwarding MUST be disabled on non-router systems.
+        recommendations:
+          - "OpenSCAP rule: sysctl_net_ipv4_ip_forward"
+      - id: CIS-NETWORK-HARDENING.02
+        title: Disable ICMP redirects
+        text: The system MUST NOT send or accept ICMP redirects.
+        recommendations:
+          - "OpenSCAP rule: sysctl_net_ipv4_conf_all_send_redirects"
+          - "OpenSCAP rule: sysctl_net_ipv4_conf_all_accept_redirects"
+      - id: CIS-NETWORK-HARDENING.03
+        title: Disable source routing
+        text: The system MUST NOT accept source-routed packets.
+        recommendations:
+          - "OpenSCAP rule: sysctl_net_ipv4_conf_all_accept_source_route"
+      - id: CIS-NETWORK-HARDENING.04
+        title: Log martian packets
+        text: The system MUST log packets with impossible addresses.
+        recommendations:
+          - "OpenSCAP rule: sysctl_net_ipv4_conf_all_log_martians"
+      - id: CIS-NETWORK-HARDENING.05
+        title: SYN flood protection
+        text: TCP SYN cookies MUST be enabled.
+        recommendations:
+          - "OpenSCAP rule: sysctl_net_ipv4_tcp_syncookies"

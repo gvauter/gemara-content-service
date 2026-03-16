@@ -1,27 +1,33 @@
-title: CIS Fedora Server L1 Compliance Policy
+title: Linux VM Compliance Policy - CIS Fedora Server L1 (Tailored)
 metadata:
-  id: cis-fedora-server-l1-policy
+  id: linux-vm-compliance-policy-tailored
   type: Policy
   gemara-version: "0.1.0"
   version: "1.0.0"
   description: >-
-    Organization policy for assessing Linux virtual machines against the CIS
-    Fedora Server Level 1 Benchmark. Assessment plans reference OpenSCAP XCCDF
-    rules evaluated via the complyctl toolchain. Cross-framework traceability
-    to FINOS Common Cloud Controls is provided by a companion MappingDocument
-    included in the same OCI bundle.
+    Tailored policy derived from the base CIS Fedora Server L1 policy. This
+    variant excludes file integrity monitoring (AIDE) and network stack
+    hardening checks. File integrity is excluded because the target VMs are
+    rebuilt from trusted images on every deploy and never persist long enough
+    to benefit from AIDE baselines. Network hardening is excluded because the
+    VMs operate behind cloud-managed firewalls and network policies that
+    enforce equivalent controls at the infrastructure layer.
   author:
-    id: complytime-demos
-    name: ComplyTime Demos
+    id: acme-platform-team
+    name: ACME Platform Engineering
     type: Human
   mapping-references:
     - id: cis-fedora-server-l1-controls
       title: CIS Fedora Server L1 Controls Catalog
       version: "1.0.0"
       description: Gemara Layer 2 control catalog for CIS Fedora Server Level 1
+    - id: cis-fedora-server-l1-policy
+      title: CIS Fedora Server L1 Compliance Policy (Base)
+      version: "1.0.0"
+      description: Base policy this tailored policy is derived from
 contacts:
   responsible:
-    - name: Platform Engineering Team
+    - name: ACME Platform Engineering Team
   accountable:
     - name: Chief Information Security Officer
 scope:
@@ -29,6 +35,7 @@ scope:
     technologies:
       - Linux Virtual Machines
       - Fedora
+      - Cloud Infrastructure
 imports:
   catalogs:
     - reference-id: cis-fedora-server-l1-controls
@@ -41,7 +48,7 @@ adherence:
         name: OpenSCAP
         type: Software
   assessment-plans:
-    # --- CIS-AUDIT ---
+    # --- CIS-AUDIT (kept — audit logging required on all VMs) ---
     - id: package_audit_installed
       requirement-id: package_audit_installed
       frequency: on-demand
@@ -114,7 +121,7 @@ adherence:
             id: openscap
             name: OpenSCAP
             type: Software
-    # --- CIS-SSH ---
+    # --- CIS-SSH (kept — SSH hardening required on all VMs) ---
     - id: sshd_disable_root_login
       requirement-id: sshd_disable_root_login
       frequency: on-demand
@@ -169,7 +176,7 @@ adherence:
             id: openscap
             name: OpenSCAP
             type: Software
-    # --- CIS-CRYPTO ---
+    # --- CIS-CRYPTO (kept — crypto policy required on all VMs) ---
     - id: configure_crypto_policy
       requirement-id: configure_crypto_policy
       frequency: on-demand
@@ -179,44 +186,18 @@ adherence:
             id: openscap
             name: OpenSCAP
             type: Software
-    # --- CIS-INTEGRITY ---
-    - id: package_aide_installed
-      requirement-id: package_aide_installed
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: aide_build_database
-      requirement-id: aide_build_database
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: aide_check_audit_tools
-      requirement-id: aide_check_audit_tools
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: aide_periodic_cron_checking
-      requirement-id: aide_periodic_cron_checking
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    # --- CIS-AUTH ---
+    # --- CIS-INTEGRITY — EXCLUDED ---
+    # Rationale: VMs are rebuilt from trusted images on every deploy.
+    # AIDE baselines provide no value when the filesystem is replaced each cycle.
+    # Risk acceptance: ACME-RA-2026-003
+    #
+    # --- CIS-NETWORK — EXCLUDED ---
+    # Rationale: VMs run behind cloud-managed VPC firewalls, security groups,
+    # and network policies that enforce equivalent controls (no forwarding,
+    # no redirects, SYN flood protection) at the infrastructure layer.
+    # Risk acceptance: ACME-RA-2026-004
+    #
+    # --- CIS-AUTH (kept — authentication hardening required) ---
     - id: accounts_password_pam_minlen
       requirement-id: accounts_password_pam_minlen
       frequency: on-demand
@@ -264,61 +245,6 @@ adherence:
             type: Software
     - id: accounts_no_uid_except_zero
       requirement-id: accounts_no_uid_except_zero
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    # --- CIS-NETWORK ---
-    - id: sysctl_net_ipv4_ip_forward
-      requirement-id: sysctl_net_ipv4_ip_forward
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: sysctl_net_ipv4_conf_all_send_redirects
-      requirement-id: sysctl_net_ipv4_conf_all_send_redirects
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: sysctl_net_ipv4_conf_all_accept_redirects
-      requirement-id: sysctl_net_ipv4_conf_all_accept_redirects
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: sysctl_net_ipv4_conf_all_accept_source_route
-      requirement-id: sysctl_net_ipv4_conf_all_accept_source_route
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: sysctl_net_ipv4_conf_all_log_martians
-      requirement-id: sysctl_net_ipv4_conf_all_log_martians
-      frequency: on-demand
-      evaluation-methods:
-        - type: Automated
-          executor:
-            id: openscap
-            name: OpenSCAP
-            type: Software
-    - id: sysctl_net_ipv4_tcp_syncookies
-      requirement-id: sysctl_net_ipv4_tcp_syncookies
       frequency: on-demand
       evaluation-methods:
         - type: Automated
